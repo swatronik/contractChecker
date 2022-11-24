@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<style>
+body {
+  font-family: "Lato", sans-serif;
+}
+
+/* Fixed sidenav, full height */
+.sidenav {
+  height: 100%;
+  width: 200px;
+  position: fixed;
+  z-index: 1;
+  top: 0;
+  left: 0;
+  background-color: #111;
+  overflow-x: hidden;
+  padding-top: 20px;
+  color: #fff;
+}
+
+/* Style the sidenav links and the dropdown button */
+.sidenav a, .dropdown-btn {
+  padding: 6px 8px 6px 16px;
+  text-decoration: none;
+  font-size: 20px;
+  color: #fff;
+  display: block;
+  border: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+  outline: none;
+}
+
+/* On mouse-over */
+.sidenav a:hover, .dropdown-btn:hover {
+  color: #f1f1f1;
+}
+
+/* Content */
+.main {
+  margin-left: 200px; /* Same as the width of the sidenav */
+  font-size: 20px; /* Increased text to enable scrolling */
+  padding: 0px 10px;
+  display: block;
+}
+
+.settings {
+  margin-left: 200px; /* Same as the width of the sidenav */
+  font-size: 20px; /* Increased text to enable scrolling */
+  padding: 0px 10px;
+  display: none;
+}
+
+.contracts {
+  margin-left: 200px; /* Same as the width of the sidenav */
+  font-size: 20px; /* Increased text to enable scrolling */
+  padding: 0px 10px;
+  display: none;
+}
+
+.createRequest {
+  margin-left: 200px; /* Same as the width of the sidenav */
+  font-size: 20px; /* Increased text to enable scrolling */
+  padding: 0px 10px;
+  display: none;
+}
+
+.createFolder {
+  margin-left: 200px; /* Same as the width of the sidenav */
+  font-size: 20px; /* Increased text to enable scrolling */
+  padding: 0px 10px;
+  display: none;
+}
+
+.integrations {
+  margin-left: 200px; /* Same as the width of the sidenav */
+  font-size: 20px; /* Increased text to enable scrolling */
+  padding: 0px 10px;
+  display: none;
+}
+
+.editQuery {
+  margin-left: 200px; /* Same as the width of the sidenav */
+  font-size: 20px; /* Increased text to enable scrolling */
+  padding: 0px 10px;
+  display: none;
+}
+
+/* Add an active class to the active dropdown button */
+.active {
+  background-color: green;
+  color: white;
+}
+
+/* Optional: Style the caret down icon */
+.fa-caret-down {
+  float: right;
+  padding-right: 8px;
+}
+
+/* Some media queries for responsiveness */
+@media screen and (max-height: 450px) {
+  .sidenav {padding-top: 15px;}
+  .sidenav a {font-size: 18px;}
+}
+
+</style>
+</head>
+<body>
+
+<div class="sidenav">
+  <a onclick="openSettings()">Настройка подключения</a>
+  <a onclick="openIntegrations()">Интеграции</a>
+</div>
+
+<div class="main">
+  <h2>Проверка контрактов</h2>
+  <p>Этот сервис поможет проверить не устарели ли контракты у интеграций</p>
+  <p>Необходим ввести запрос и ответ, и этот сервис проверит соответствуют они друг другу или нет</p>
+</div>
+
+<div class="settings">
+  <h2>Настройка подключения</h2>
+  <p><b>Периодический запуск:</b><input type="button" Value="Изменить" id="buttonPeriodRun" onclick="editPeriodRun()"><br>
+  <label id="periodRun"></label><div id="divPeriodRun"></div>
+  <p><b>Сохранение/загрузка:</b><br>
+  <p><label>Экспорт</label>
+  <input type="button" Value="Экспорт" onclick="location.href='/export';"></p>
+  <p><label for="fileImportResponse">Импорт</label>
+  <input type="file" id="fileImportResponse" name="fileImportResponse" accept=".txt" onchange="handleImportResponse(this.files)">
+  <input type="button" Value="Сохранить" onclick="loadImport()"></p>
+  <p><b>Подключения:</b><br>
+  <div id="divTableUrl"></div>
+  <p><input type="button" Value="Создать" onclick="createConnection()">
+  <input type="button" Value="Отменить" onclick="cancelSettings()"></p>
+</div>
+
+<div class="contracts">
+  <h2>Запросы <label id="nameIntegration"></label></h2>
+  <div id="divTableQuery"></div>
+  <p><input type="button" Value="Создать запрос" onclick="createQuery()">
+</div>
+
+<div class="createRequest">
+  <h2>Создать запрос</h2>
+  <p><b>Название запроса:</b><br>
+   <input type="text" id="nameRequest" size="40">
+  <p><b>Подключение:</b>
+  <div id="divConnections"></div>
+  <p><input type="button" Value="Добавить подключение" onclick="addConnection('divConnections')"><input type="button" Value="Убрать подключение" onclick="removeConnection('divConnections')">
+  <p><b>Интеграция:</b>
+  <div id="divFolder"></div>
+  <p><b>Endpoint запроса:</b><br>
+   <input type="text" id="urlRequest" size="40">
+   <p>Тип запроса:<Br>
+   <input type="radio" name="methodRequest" value="GET" checked>GET<Br>
+   <input type="radio" name="methodRequest" value="POST">POST<Br>
+   <input type="radio" name="methodRequest" value="PUT">PUT<Br>
+   <input type="radio" name="methodRequest" value="DELETE">DELETE<Br>
+  </p>
+  <p><b><label for="fileElemBody">Выбрать файл body</label></b>
+  <input type="file" id="fileElemBody" name="fileElemBody" accept=".txt" onchange="handleFilesBody(this.files)">
+  </p>
+  <p><b><label for="fileElemResponse">Выбрать файл ожидаемого ответа</label></b>
+    <input type="file" id="fileElemResponse" name="fileElemResponse" accept=".txt" onchange="handleFilesResponse(this.files)">
+  </p>
+  <p><input type="button" Value="Создать" onclick="saveQuery()">
+</div>
+
+<div class="integrations">
+  <h2>Интеграции</h2><input type="button" Value="Обновить все" onclick="refreshAllContract()">
+
+    <p><div id="divIntegrations"></div></p>
+  <p><input type="button" Value="Создать интеграцию" onclick="openFolder()"><input type="button" Value="Создать запрос" onclick="createQuery()">
+</div>
+
+<div class="createFolder">
+  <h2>Создать интеграцию</h2>
+  <p><b>Название папки:</b><br>
+   <input type="text" id="nameFolder" size="40">
+  <div id="divLoginConnections"></div>
+  <p><b>Endpoint запроса:</b><br>
+   <input type="text" id="urlLoginRequest" size="40">
+   <p>Тип запроса:<Br>
+   <input type="radio" name="methodLoginRequest" value="GET" checked>GET<Br>
+   <input type="radio" name="methodLoginRequest" value="POST">POST<Br>
+  </p>
+    <p><b>Название токена в ответе запроса:</b><br>
+  <input type="text" id="nameToken" size="40">
+  <p><b><label for="fileFolderElemBody">Выбрать файл body</label></b>
+  <input type="file" id="fileFolderElemBody" name="fileFolderElemBody" accept=".txt" onchange="handleFolderFilesBody(this.files)">
+  </p>
+  <p><b><label for="fileFolderElemResponse">Выбрать файл ожидаемого ответа</label></b>
+    <input type="file" id="fileFolderElemResponse" name="fileFolderElemResponse" accept=".txt" onchange="handleFolderFilesResponse(this.files)">
+  </p>
+  <p><input type="button" Value="Создать" onclick="saveFolderQuery()">
+</div>
+
+<div class="editQuery">
+  <h2>Данные запроса</h2>
+  <p><b>Название запроса:</b></p>
+   <table><tr><td width="50%"><label id="nameQueryEdit"></label></td><td width="50%"><div id="divNameUpdate"></div></td></tr></table>
+    <p><input type="button" Value="Изменить" id="buttonNameUpdate" onclick="editAtribute('NameUpdate')"></p>
+  <p><b>Подключение:</b></p>
+   <table><tr><td width="50%"><div id="divConnectionsEdit"></div></td><td width="50%"><div id="divConnectionsUpdate"></div></td></tr></table>
+    <p><input type="button" Value="Изменить" id="buttonConnectionsUpdate" onclick="editAtribute('ConnectionsUpdate')"></p>
+  <p><b>Интеграция:</b></p>
+   <table><tr><td width="50%"><label id="divFolderEdit"></label></td><td width="50%"><div id="divFolderUpdate"></div></td></tr></table>
+    <p><input type="button" Value="Изменить" id="buttonFolderUpdate" onclick="editAtribute('FolderUpdate')"></p>
+  <p><b>Endpoint запроса:</b></p>
+   <table><tr><td width="50%"> <label id="urlRequestEdit"></label></td><td width="50%"><div id="divRequestUpdate"></div></td></tr></table>
+    <p><input type="button" Value="Изменить" id="buttonRequestUpdate" onclick="editAtribute('RequestUpdate')"></p>
+  <p><b>Тип запроса:</b></p><p><input type="button" Value="Изменить" id="buttonMethodUpdate" onclick="editAtribute('MethodUpdate')"></p>
+   <table><tr><td width="50%"><label id="methodRequestEdit"></label></td><td width="50%"><div id="divMethodUpdate"></div></td></tr></table>
+  <p><b>Файл body:</b></p>
+   <table><tr><td width="50%"><label id="bodyFileEdit"></label></td><td width="50%"><div id="divBodyUpdate"></div></td></tr></table>
+    <p><input type="button" Value="Изменить" id="buttonBodyUpdate" onclick="editAtribute('BodyUpdate')"></p>
+  <p><b>Файл ожидаемого ответа:</b></p>
+   <table><tr><td width="50%"><label id="responseFileEdit"></label></td><td width="50%"><div id="divResponseUpdate"></div></td></tr></table>
+    <p><input type="button" Value="Изменить" id="buttonResponseUpdate" onclick="editAtribute('ResponseUpdate')"></p>
+  <p><div id="divButton"></div></p>
+</div>
+
+<script>
+	let urlHost = window.location.href
+	
+	var fileListBody
+	function handleFilesBody() {
+		fileListBody = this.files;
+	}
+	const inputElementBody = document.getElementById("fileElemBody");
+	if(inputElementBody){
+		inputElementBody.addEventListener("change", handleFilesBody, false);
+	}
+	
+	var fileListResponse
+	function handleFilesResponse() {
+		fileListResponse = this.files;
+	}
+	const inputElementResponse = document.getElementById("fileElemResponse");
+	if(inputElementResponse){
+		inputElementResponse.addEventListener("change", handleFilesResponse, false);
+	}
+	
+	var fileFolderListBody
+	function handleFolderFilesBody() {
+		fileFolderListBody = this.files;
+	}
+	const inputFolderElementBody = document.getElementById("fileFolderElemBody");
+	if(inputFolderElementBody){
+		inputFolderElementBody.addEventListener("change", handleFolderFilesBody, false);
+	}
+	
+	var fileFolderListResponse
+	function handleFolderFilesResponse() {
+		fileFolderListResponse = this.files;
+	}
+	const inputFolderElementResponse = document.getElementById("fileFolderElemResponse");
+	if(inputFolderElementResponse){
+		inputFolderElementResponse.addEventListener("change", handleFolderFilesResponse, false);
+	}
+	
+	function createConnection() {
+		var tableLength = document.getElementById("tableUrl").childNodes.length;
+		var rowId = 'rowId' + tableLength;
+		var tableObj = document.createElement('tbody');
+		tableObj.setAttribute("id", rowId);
+		var tableHTML = '';
+		tableHTML +='<tr><b>';
+		tableHTML +='<td width="30%"><input type="text" id="nameConnection'+rowId+'" style="width:100%"></td>';
+		tableHTML +='<td width="45%"><input type="text" id="urlConnection'+rowId+'" style="width:100%"></td>';
+		tableHTML +='<td width="15%"><input type="button" Value="Сохранить" onclick="saveConnection('+rowId+')"></td>';
+		tableHTML +='<td width="10%"><input type="button" Value="Отмена" onclick="refreshConnection()"></td></b></tr>';
+
+		tableObj.innerHTML = tableHTML;
+		document.getElementById("tableUrl").appendChild(tableObj);
+	}
+	
+	function saveConnection(rowId) {
+		let nameConnection = document.getElementById("nameConnection"+rowId.id).value
+		let urlConnection = document.getElementById("urlConnection"+rowId.id).value
+		
+		let body = JSON.stringify({ nameConnection: nameConnection, urlConnection: urlConnection});
+		let xhr = new XMLHttpRequest();
+		xhr.open("POST", urlHost + "/saveConnection", false)
+		xhr.send(body)
+		refreshConnection()
+	}
+	
+	function refreshConnection() {
+		let xhr = new XMLHttpRequest();
+		xhr.open("GET", urlHost + "/getPeriodRun", false);
+		xhr.send();
+		document.getElementById("periodRun").innerHTML = xhr.responseText;
+	
+		var parentDiv = document.getElementById("divTableUrl")
+		while (parentDiv.firstChild) {
+			parentDiv.removeChild(parentDiv.lastChild);
+		}
+		
+		var table = document.createElement('table');
+		table.setAttribute("id", "tableUrl");
+		table.setAttribute("class", "table table-bordered table-hover")
+		table.style.width = '100%';
+		var tableHead = document.createElement('thead');
+		tableHead.setAttribute("class","thead-light")
+		var tableHeadHtml='<td width="30%">Название</td>';
+		tableHeadHtml +='<td width="45%">URL</td>';
+		tableHeadHtml +='<td width="15%">Подключение</td>';
+		tableHeadHtml +='<td width="10%">Удалить</td>';
+		tableHead.innerHTML = tableHeadHtml;
+        table.appendChild(tableHead);
+		
+		xhr.open("GET", urlHost + "/getConnection", false);
+		let response = xhr.send();
+		JSON.parse(xhr.responseText, function(key, value) {
+			if (key == 0 || key == "") {
+				return;
+			}
+			var tableBody = document.createElement('tbody');
+			tableBody.setAttribute("class","tbody-light");
+			var tableHTML ='<td width="30%">'+key+'</td>';
+			tableHTML +='<td width="45%">'+value+'</td>';
+			
+			let body = JSON.stringify({ nameConnection: key, urlConnection: value});
+			let xhrCheck = new XMLHttpRequest();
+			xhrCheck.open("POST", urlHost + "/checkConnect", false)
+			xhrCheck.send(body)
+			
+			if(xhrCheck.responseText == "TRUE") {
+				tableHTML +='<td style="color:green;" width="15%">OK</td>';
+			} else {
+				tableHTML +='<td style="color:red;" width="15%">ERROR</td>';
+			}
+			tableHTML +='<td width="10%"><input type="button" Value="Удалить" onclick="deleteConnection(\''+key+'\')"></td>';
+			tableBody.innerHTML = tableHTML;
+			table.appendChild(tableBody);
+		});
+		parentDiv.appendChild(table);
+	}
+	
+	function deleteConnection(name) {
+		let body = JSON.stringify({ nameConnection: name, urlConnection: ""});
+		let xhrCheck = new XMLHttpRequest();
+		xhrCheck.open("POST", urlHost + "/deleteConnection", false)
+		xhrCheck.send(body)
+		refreshConnection()
+	}
+
+	function openSettings() {
+		showDiv('settings')
+		refreshConnection()
+	}
+	
+	function cancelSettings() {
+		showDiv('main')
+	}
+	
+	function loadImport() {
+		var p1 = Promise.resolve(document.getElementById("fileImportResponse").files.item(0).text());
+		p1.then(function(v) {
+			if(v.length > 0) {
+				let xhr = new XMLHttpRequest();
+				xhr.open("POST", urlHost + "/import", false)
+				xhr.send(v)
+				refreshConnection()
+			}
+		});	
+	}
+	
+	function createQuery() {
+		showDiv('createRequest')
+		
+		var parentDiv = document.getElementById("divFolder");
+		while (parentDiv.firstChild) {
+			parentDiv.removeChild(parentDiv.lastChild);
+		}
+		
+		var tableObj = document.createElement('folder');
+		var tableHTML = '';
+		tableHTML +='<select>';
+		
+		let xhr = new XMLHttpRequest();
+		xhr.open("GET", urlHost + "/getFolders", false);
+		let response = xhr.send();
+		var jsonData = JSON.parse(xhr.responseText);
+		for (var i = 0; i < jsonData.length; i++) {
+			var counter = jsonData[i];
+			tableHTML +='<option value="key">' + counter["nameFolder"] + '</option>';
+		}
+
+		tableHTML +='</select><br>';
+		tableObj.innerHTML = tableHTML;
+		parentDiv.appendChild(tableObj);
+	}
+	
+	function addConnection(nameDiv) {
+		var parentDiv = document.getElementById(nameDiv);
+		var tableObj = document.createElement('conection');
+		
+		var tableHTML = '';
+		tableHTML +='<select>';
+		
+		let xhr = new XMLHttpRequest();
+		xhr.open("GET", urlHost + "/getConnection", false);
+		let response = xhr.send();
+		JSON.parse(xhr.responseText, function(key, value) {
+			if (key == 0 || key == "") {
+				return;
+			}
+			tableHTML +='<option value="key">' + key + '</option>';
+		});
+		tableHTML +='</select><br>';
+		tableObj.innerHTML = tableHTML;
+		parentDiv.appendChild(tableObj);
+	}
+	
+	function removeConnection(nameDiv) {
+		var parentDiv = document.getElementById(nameDiv);
+		parentDiv.removeChild(parentDiv.lastChild);
+	}
+	
+	function editPeriodRun(){
+		var el = document.getElementById("buttonPeriodRun");
+		var parentDiv = document.getElementById("divPeriodRun");
+		if (el.value == "Изменить") {
+			el.value  = "Отменить";
+				var updateElem = document.createElement('updateAtribute');
+				var tableHTML = '<input type="text" id="valuePeriodCron" size="40">';
+				tableHTML += '<input type="button" Value="Сохранить" onclick="savePeriodCron()">';
+				updateElem.innerHTML = tableHTML;
+				parentDiv.appendChild(updateElem);
+		} else {
+			el.value = "Изменить";
+			while (parentDiv.firstChild) {
+				parentDiv.removeChild(parentDiv.lastChild);
+			}
+		}
+	}
+	
+	function savePeriodCron(){
+		let newPeriod = document.getElementById("valuePeriodCron").value
+		let xhr = new XMLHttpRequest();
+		xhr.open("GET", urlHost + "/setPeriodRun/"+newPeriod, false)
+		xhr.send()
+		document.getElementById("buttonPeriodRun").click()
+		refreshConnection();
+	}
+	
+	function saveQuery() {
+		let name = document.getElementById("nameRequest").value
+		let url = document.getElementById("urlRequest").value
+		let method = document.querySelector('input[name="methodRequest"]:checked').value;
+		let folderSelect = document.getElementById("divFolder").firstChild.children[0]
+		let folder = folderSelect.options[folderSelect.selectedIndex].text
+		var connections = []
+		var childConnection = document.getElementById("divConnections").firstChild;
+		while(childConnection) {
+			let childSelect = childConnection.children[0]
+			connections.push(childSelect.options[childSelect.selectedIndex].text)
+			childConnection = childConnection.nextSibling;
+		}
+		
+		var bodyText;
+		var responseText;
+		var p1 = Promise.resolve(fileListBody.item(0).text());
+		p1.then(function(v) {
+			bodyText = v;
+			var p2 = Promise.resolve(fileListResponse.item(0).text());
+			p2.then(function(v) {
+				responseText = v;
+				let body = JSON.stringify({ name: name, url: url, method: method, connections: connections, folderName: folder, bodyText: bodyText, responseText: responseText });
+				let xhr = new XMLHttpRequest();
+				xhr.open("POST", urlHost + "/createQuery", false)
+				xhr.send(body)
+				openContracts(folder);
+			});
+		});
+	}
+	
+	function refreshQueries(name) {
+		let folder = document.getElementById("nameIntegration").textContent
+		let body = JSON.stringify({ nameFolder: name});
+		let xhr = new XMLHttpRequest();
+		xhr.open("POST", urlHost + "/getQueryFolder", false);
+		let response = xhr.send(body);
+		
+		var jsonData = JSON.parse(xhr.responseText);
+		for (var i = 0; i < jsonData.length; i++) {
+			var counter = jsonData[i];
+			var connections = counter["connections"]
+			var connectionHTML = ''
+			connections.forEach((element) => {
+				if (element["isConnect"]) {
+					connectionHTML += '<label style="color:green;">'+ element["name"] +'</label><br>';
+				} else {
+					connectionHTML += '<label style="color:red;">'+ element["name"] +'</label><br>';
+				}
+			})
+			
+			var tableObj = document.createElement('tbody');
+			var tableHTML = '';
+			tableHTML +='<td width="50%" onclick="editContracts(\''+counter["name"]+'\' , \''+folder+'\')">'+counter["name"]+'</td>';
+			tableHTML +='<td width="20%">'+connectionHTML+'</td>';
+			tableHTML +='<td width="10%"><input type="button" Value="Тест" onclick="refreshContract(\''+counter["name"]+'\' , \''+folder+'\')"></td>';
+			tableHTML +='<td width="10%"><input type="button" Value="Скачать" onclick="location.href=\'/download7z/'+folder+'/'+counter["name"]+'\';"></td></b></tr>';
+
+			tableObj.innerHTML = tableHTML;
+			document.getElementById("tableQuery").appendChild(tableObj);
+		}	
+	}
+	
+	function editContracts(name, folder) {
+		showDiv('editQuery');
+		
+		var parentDivConn = document.getElementById("divConnectionsEdit")
+		while (parentDivConn.firstChild) {
+			parentDivConn.removeChild(parentDivConn.lastChild);
+		}
+		
+		var parentDivButton = document.getElementById("divButton")
+		while (parentDivButton.firstChild) {
+			parentDivButton.removeChild(parentDivButton.lastChild);
+		}
+		
+		let body = JSON.stringify({ nameQuery: name, nameFolder: folder});
+		let xhr = new XMLHttpRequest();
+		xhr.open("POST", urlHost + "/getQuery", false);
+		let response = xhr.send(body);
+		var jsonData = JSON.parse(xhr.responseText);
+		
+		document.getElementById("nameQueryEdit").innerHTML = name
+		document.getElementById("divFolderEdit").innerHTML = folder
+		document.getElementById("urlRequestEdit").innerHTML = jsonData["url"]
+		document.getElementById("methodRequestEdit").innerHTML = jsonData["method"]
+		
+		var tableObj = document.createElement('tbody');
+		var connectionHTML = ''
+		let connections = jsonData["connections"]
+		connections.forEach((element) => {
+				if (element["isConnect"]) {
+					connectionHTML += '<label style="color:green;">'+ element["name"] +'</label><br>';
+				} else {
+					connectionHTML += '<label style="color:red;">'+ element["name"] +'</label><br>';
+				}
+			})
+		tableObj.innerHTML = connectionHTML;
+		parentDivConn.appendChild(tableObj);
+		
+		var buttonObj = document.createElement('buttonBody');
+		var buttonHTML = '<input type="button" Value="Отменить" onclick="openContracts(\''+folder+'\')">';
+		buttonHTML += '<input type="button" Value="Сохранить" onclick="saveEditContract(\''+name+'\' , \''+folder+'\')">'
+		buttonHTML += '<input type="button" Value="Удалить" onclick="deleteContract(\''+name+'\' , \''+folder+'\')">'
+		
+		buttonObj.innerHTML = buttonHTML;
+		parentDivButton.appendChild(buttonObj);
+	}
+	
+	function saveEditContract(name, folder) {
+	
+		var updateObj = {}
+		
+		if (document.getElementById("buttonNameUpdate").value == "Отменить")  {
+			updateObj.name = document.getElementById("valueNameUpdate").value
+		}
+		
+		if (document.getElementById("buttonConnectionsUpdate").value == "Отменить")  {
+			var connections = []
+			var childConnection = document.getElementById("divInnerConnectionsUpdate").firstChild;
+			while(childConnection) {
+				let childSelect = childConnection.children[0]
+				connections.push(childSelect.options[childSelect.selectedIndex].text)
+				childConnection = childConnection.nextSibling;
+			}
+			updateObj.connections = connections
+		}
+		
+		if (document.getElementById("buttonFolderUpdate").value == "Отменить")  {
+			var childConnectionSelect = document.getElementById("divFolderUpdate").firstChild.children[0];
+			let connection = childConnectionSelect.options[childConnectionSelect.selectedIndex].text
+		
+			updateObj.folderName = connection
+		}
+		
+		if (document.getElementById("buttonRequestUpdate").value == "Отменить")  {
+			updateObj.url = document.getElementById("valueRequestUpdate").value
+		}
+		
+		if (document.getElementById("buttonMethodUpdate").value == "Отменить")  {
+			updateObj.method = document.querySelector('input[name="methodRequestUpdate"]:checked').value;
+		}
+		
+		var promiseWaitQueue = []
+		
+		if (document.getElementById("buttonBodyUpdate").value == "Отменить")  {
+			var p1 = Promise.resolve(document.getElementById("fileUpdateElemBody").files.item(0).text());
+			p1.then(function(v) {
+				updateObj.bodyText = v;
+			});
+			promiseWaitQueue.push(p1);
+		}
+		
+		if (document.getElementById("buttonResponseUpdate").value == "Отменить")  {
+			var p2 = Promise.resolve(document.getElementById("fileUpdateElemResponse").files.item(0).text());
+			p2.then(function(v) {
+				updateObj.responseText = v;
+			});
+			promiseWaitQueue.push(p2);
+		}
+		
+		Promise.all(promiseWaitQueue).then(values => {
+			let body = JSON.stringify({ nameFolder: folder, nameQuery: name, updateObject: updateObj });
+			let xhr = new XMLHttpRequest();
+			xhr.open("POST", urlHost + "/updateQuery", false)
+			xhr.send(body)
+			openContracts(folder)
+		});
+		
+		/*var p1 = Promise.resolve(fileFolderListBody.item(0).text());
+		var p2 = Promise.resolve(fileFolderListResponse.item(0).text());
+		Promise.all([p1, p2]).then(values => {
+			console.log(values);
+		});
+		
+		
+		var bodyText;
+		var responseText;
+		var p1 = Promise.resolve(fileFolderListBody.item(0).text());
+		p1.then(function(v) {
+			bodyText = v;
+			var p2 = Promise.resolve(fileFolderListResponse.item(0).text());
+			p2.then(function(v) {
+				responseText = v;
+				let body = JSON.stringify({ nameFolder: nameFolder, url: url, method: method, nameToken: nameToken, connection: connection, bodyText: bodyText, responseText: responseText });
+				let xhr = new XMLHttpRequest();
+				xhr.open("POST", urlHost + "/createFolder", false)
+				xhr.send(body)
+				openIntegrations();
+			});
+		});*/
+		
+	}
+	
+	function editAtribute(name) {
+		var el = document.getElementById("button" + name);
+		var parentDiv = document.getElementById("div" + name);
+		if (el.value == "Изменить") {
+			el.value  = "Отменить";
+			
+			switch (name) {
+				case "NameUpdate":
+					var updateElem = document.createElement('updateAtribute');
+					var tableHTML = '<input type="text" id="valueNameUpdate" size="40">';
+					updateElem.innerHTML = tableHTML;
+					parentDiv.appendChild(updateElem);
+					break;
+				case "ConnectionsUpdate":
+					var updateElem = document.createElement('updateAtribute');
+					
+					var tableHTML = '<div id="divInnerConnectionsUpdate"></div>'
+					tableHTML += '<input type="button" Value="Добавить подключение" onclick="addConnection(\'divInnerConnectionsUpdate\')">'
+					tableHTML += '<input type="button" Value="Убрать подключение" onclick="removeConnection(\'divInnerConnectionsUpdate\')">';
+					
+					updateElem.innerHTML = tableHTML;
+					parentDiv.appendChild(updateElem);
+					break;
+				case "FolderUpdate":
+					var updateElem = document.createElement('updateAtribute');
+					var tableObj = document.createElement('folder');
+					var tableHTML = '';
+					tableHTML +='<select>';
+		
+					let xhr = new XMLHttpRequest();
+					xhr.open("GET", urlHost + "/getFolders", false);
+					let response = xhr.send();
+					var jsonData = JSON.parse(xhr.responseText);
+					for (var i = 0; i < jsonData.length; i++) {
+						var counter = jsonData[i];
+						tableHTML +='<option value="key">' + counter["nameFolder"] + '</option>';
+					}
+
+					tableHTML +='</select><br>';
+					
+					updateElem.innerHTML = tableHTML;
+					parentDiv.appendChild(updateElem);
+					break;
+				case "RequestUpdate":
+					var updateElem = document.createElement('updateAtribute');
+					var tableHTML = '<input type="text" id="valueRequestUpdate" size="40">';
+					updateElem.innerHTML = tableHTML;
+					parentDiv.appendChild(updateElem);
+					break;
+				case "MethodUpdate":
+					var updateElem = document.createElement('updateAtribute');
+					var tableHTML = '<input type="radio" name="methodRequestUpdate" value="GET" checked>GET<Br>';
+					tableHTML += '<input type="radio" name="methodRequestUpdate" value="POST">POST<Br>';
+					tableHTML += '<input type="radio" name="methodRequestUpdate" value="PUT">PUT<Br>';
+					tableHTML += '<input type="radio" name="methodRequestUpdate" value="DELETE">DELETE<Br>';
+					updateElem.innerHTML = tableHTML;
+					parentDiv.appendChild(updateElem); 
+					break;
+				case "BodyUpdate":
+					var updateElem = document.createElement('updateAtribute');
+					var tableHTML = '<p><b><label for="fileUpdateElemBody">Выбрать файл body</label></b>';
+					tableHTML += '<input type="file" id="fileUpdateElemBody" name="fileUpdateElemBody" accept=".txt" onchange="handleUpdateFilesBody(this.files)"></p>'
+					updateElem.innerHTML = tableHTML;
+					parentDiv.appendChild(updateElem);
+					break;
+				case "ResponseUpdate":
+					var updateElem = document.createElement('updateAtribute');
+					var tableHTML = '<p><b><label for="fileUpdateElemResponse">Выбрать файл ожидаемого ответа</label></b>';
+					tableHTML += '<input type="file" id="fileUpdateElemResponse" name="fileUpdateElemResponse" accept=".txt" onchange="handleUpdateFilesResponse(this.files)"></p>'
+					updateElem.innerHTML = tableHTML;
+					parentDiv.appendChild(updateElem);
+					break;
+				default:
+					console.log("Dont find in block update atribute with name: " + name);
+			}
+			
+		} else {
+			el.value = "Изменить";
+			while (parentDiv.firstChild) {
+				parentDiv.removeChild(parentDiv.lastChild);
+			}
+		}
+	}
+	
+	function deleteContract(name, folder) {
+		let body = JSON.stringify({ nameQuery: name, nameFolder: folder});
+		let xhr = new XMLHttpRequest();
+		xhr.open("POST", urlHost + "/deleteQuery", false);
+		let response = xhr.send(body);
+		
+		openContracts(folder)
+	}
+		
+	function openContracts(name) {
+		showDiv('contracts')
+		
+		document.getElementById("nameIntegration").innerHTML = name;
+		
+		var parentDiv = document.getElementById("divTableQuery")
+		while (parentDiv.firstChild) {
+			parentDiv.removeChild(parentDiv.lastChild);
+		}
+
+		var tableObj = document.createElement('table');
+		tableObj.setAttribute("id", "tableQuery");
+		tableObj.style.width = '100%';
+		tableObj.setAttribute("class", "table table-bordered table-hover")
+
+        var tableHeadContr = document.createElement('thead');
+		tableHeadContr.setAttribute("class","thead-light")
+
+
+		var tableHTML='<tr>';
+
+		tableHTML +='<td width="50%">Запрос</td>';
+		tableHTML +='<td width="20%">Подключение</td>';
+		tableHTML +='<td width="10%">Тест</td>';
+		tableHTML +='<td width="10%">Скачать 7Z</td></tr>';
+
+		tableHeadContr.innerHTML = tableHTML;
+
+		tableObj.appendChild(tableHeadContr);
+
+		parentDiv.appendChild(tableObj);
+
+		refreshQueries(name)
+	}
+	
+	function refreshAllContract() {
+		let xhr = new XMLHttpRequest();
+		xhr.open("GET", urlHost + "/refreshAllQuery", false)
+		xhr.send()
+		openIntegrations()
+	}
+	
+	function refreshContract(name, folder) {
+		let body = JSON.stringify({ nameFolder: folder, nameQuery: name });
+		let xhrCheck = new XMLHttpRequest();
+		xhrCheck.open("POST", urlHost + "/refreshQuery", false)
+		xhrCheck.send(body)
+		openContracts(folder)
+	}
+	
+	function deleteFolder(name) {
+		let body = JSON.stringify({ nameFolder: name });
+		let xhrCheck = new XMLHttpRequest();
+		xhrCheck.open("POST", urlHost + "/deleteFolder", false)
+		xhrCheck.send(body)
+		openIntegrations()
+	}
+	
+	function refreshFolder() {
+		let xhr = new XMLHttpRequest();
+		xhr.open("GET", urlHost + "/getFolders", false);
+		let response = xhr.send();
+		
+		var jsonData = JSON.parse(xhr.responseText);
+		for (var i = 0; i < jsonData.length; i++) {
+			var counter = jsonData[i];
+			
+			var tableObj = document.createElement('tbody');
+			var tableHTML = '';
+			tableHTML +='<tr><b>';
+			tableHTML +='<td width="70%" onclick="openContracts(\''+counter["nameFolder"]+'\')">'+counter["nameFolder"]+'</td>';
+			
+			if (counter["haveToken"] == true) {
+				tableHTML += '<td width="15%"><label style="color:green;">OK</label></td>';
+			} else {
+				tableHTML += '<td width="15%"><label style="color:red;">ERROR</label></td>';
+			}
+			
+			if (counter["haveConnection"] == null) {
+				tableHTML += '<td width="15%"><input type="button" Value="Удалить" onclick="deleteFolder(\''+counter["nameFolder"]+'\')"></td>'
+			} else {
+				if (counter["haveConnection"] == true) {
+					tableHTML += '<td width="15%"><label style="color:green;">OK</label></td>';
+				} else {
+					tableHTML += '<td width="15%"><label style="color:red;">ERROR</label></td>';
+				}
+			}
+
+			tableObj.innerHTML = tableHTML;
+			document.getElementById("tableFolderQuery").appendChild(tableObj);
+		}
+		
+	}
+	
+	function openIntegrations() {
+		showDiv('integrations')
+		var parentDiv = document.getElementById("divIntegrations")
+		while (parentDiv.firstChild) {
+			parentDiv.removeChild(parentDiv.lastChild);
+		}
+		
+		var table = document.createElement('table');
+		table.setAttribute("id", "tableFolderQuery");
+		table.style.width = '100%';
+		table.setAttribute("class", "table table-bordered table-hover")
+
+		var tableHead = document.createElement('thead');
+		tableHead.setAttribute("class","thead-light")
+
+		var tableHeadHTML='<tr>';
+		tableHeadHTML +='<td width="70%">Интеграция</td>';
+		tableHeadHTML +='<td width="15%">Токен</td>';
+		tableHeadHTML +='<td width="15%">Контракты</td>';
+		tableHead.innerHTML = tableHeadHTML;
+
+		table.appendChild(tableHead);
+		parentDiv.appendChild(table);
+		refreshFolder();
+	}
+	
+	function openFolder() {
+		showDiv('createFolder')
+		addLoginConnection()
+	}
+	
+	function addLoginConnection() {
+		var parentDiv = document.getElementById("divLoginConnections")
+		while (parentDiv.firstChild) {
+			parentDiv.removeChild(parentDiv.lastChild);
+		}
+		addConnection("divLoginConnections");
+	}
+	
+	function saveFolderQuery() {
+		let nameFolder = document.getElementById("nameFolder").value
+		let url = document.getElementById("urlLoginRequest").value
+		let method = document.querySelector('input[name="methodLoginRequest"]:checked').value;
+		let nameToken = document.getElementById("nameToken").value
+
+		var childConnectionSelect = document.getElementById("divLoginConnections").firstChild.children[0];
+		let connection = childConnectionSelect.options[childConnectionSelect.selectedIndex].text
+		
+		var bodyText;
+		var responseText;
+		var p1 = Promise.resolve(fileFolderListBody.item(0).text());
+		p1.then(function(v) {
+			bodyText = v;
+			var p2 = Promise.resolve(fileFolderListResponse.item(0).text());
+			p2.then(function(v) {
+				responseText = v;
+				let body = JSON.stringify({ nameFolder: nameFolder, url: url, method: method, nameToken: nameToken, connection: connection, bodyText: bodyText, responseText: responseText });
+				let xhr = new XMLHttpRequest();
+				xhr.open("POST", urlHost + "/createFolder", false)
+				xhr.send(body)
+				openIntegrations();
+			});
+		});
+	}
+	
+	function showDiv(nameDiv) {
+		var elems1=document.getElementsByClassName('main'); 
+		for(var i=0; i<elems1.length; i++)elems1[i].style.display='none';
+
+		var elems2=document.getElementsByClassName('settings');
+		for(var i=0; i<elems2.length; i++)elems2[i].style.display='none';
+		
+		var elems3=document.getElementsByClassName('contracts');
+		for(var i=0; i<elems3.length; i++)elems3[i].style.display='none';
+		
+		var elems4=document.getElementsByClassName('createRequest');
+		for(var i=0; i<elems4.length; i++)elems4[i].style.display='none';
+		
+		var elems2=document.getElementsByClassName('integrations');
+		for(var i=0; i<elems2.length; i++)elems2[i].style.display='none';
+		
+		var elems5=document.getElementsByClassName('createFolder');
+		for(var i=0; i<elems5.length; i++)elems5[i].style.display='none';
+		
+		var elems6=document.getElementsByClassName('editQuery');
+		for(var i=0; i<elems6.length; i++)elems6[i].style.display='none';
+		
+		var elems7=document.getElementsByClassName(nameDiv);
+		for(var i=0; i<elems7.length; i++)elems7[i].style.display='block';
+	}
+</script>
+<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+</body>
+</html> 
